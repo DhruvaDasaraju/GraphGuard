@@ -1,0 +1,171 @@
+"""
+GraphGuard Pydantic Models
+
+Defines all request/response schemas used by the REST API and internal components.
+These are the "shapes" of data moving through the system.
+"""
+
+from __future__ import annotations
+
+from datetime import datetime
+from typing import Any, Optional
+from pydantic import BaseModel, Field
+
+
+# ── Graph Node Models ──────────────────────────────────────────────────────────
+
+class ServiceNode(BaseModel):
+    id: str
+    name: str
+    description: str = ""
+    environment: str = "production"
+    criticality: str = "medium"   # low | medium | high | critical
+    owner_id: Optional[str] = None
+
+
+class VulnerabilityNode(BaseModel):
+    id: str
+    title: str
+    severity: str           # low | medium | high | critical
+    description: str = ""
+    affected_version: str = ""
+    status: str = "open"    # open | patched | mitigated
+
+
+class OwnerNode(BaseModel):
+    id: str
+    name: str
+    team: str = ""
+    contact: str = ""
+
+
+class RemediationTicket(BaseModel):
+    id: str
+    title: str
+    description: str = ""
+    status: str = "PROPOSED"       # PROPOSED | NEEDS_REVIEW | IN_PROGRESS | DONE
+    priority: str = "P3"           # P1 | P2 | P3 | P4
+    target_service_id: str
+    vulnerability_id: str
+    risk_score: float = 0.0
+    evidence_json: str = ""        # JSON string of supporting evidence paths
+    created_at: str = ""
+
+
+# ── Dependency / Path Models ────────────────────────────────────────────────────
+
+class PathHop(BaseModel):
+    """A single step in a dependency path."""
+    service_id: str
+    service_name: str
+    criticality: str
+    relationship: str = "DEPENDS_ON"
+
+
+class DependencyPath(BaseModel):
+    """Full multi-hop path from a dependent service to the target."""
+    path: list[PathHop]
+    hop_count: int
+    connection_type: str      # "direct" | "indirect"
+    dependent_service_id: str
+    dependent_service_name: str
+    vulnerabilities_on_path: list[str] = Field(default_factory=list)
+
+
+class ImpactedService(BaseModel):
+    service_id: str
+    service_name: str
+    criticality: str
+    connection_type: str         # "direct" | "indirect"
+    hop_count: int
+    owner: Optional[OwnerNode] = None
+    dependency_paths: list[DependencyPath] = Field(default_factory=list)
+
+
+# ── Risk Scoring ───────────────────────────────────────────────────────────────
+
+class RiskScore(BaseModel):
+    vulnerability_id: str
+    vulnerability_title: str
+    severity: str
+    severity_base: float
+    impact_bonus: float
+    depth_bonus: float
+    risk_score: float
+    priority: str              # P1 | P2 | P3 | P4
+    affected_service_count: int
+    observed_depth: int
+    explanation: str
+
+
+# ── Agent Investigation Result ─────────────────────────────────────────────────
+
+class ToolCallRecord(BaseModel):
+    tool_name: str
+    arguments: dict[str, Any]
+    result_summary: str
+    success: bool
+    error: Optional[str] = None
+
+
+class InvestigationResult(BaseModel):
+    investigation_id: str
+    mode: str                  # "autonomous_llm" | "deterministic_demo"
+    question: str
+    target_entity: Optional[str] = None
+    target_entity_type: Optional[str] = None   # "service" | "vulnerability"
+    vulnerabilities_found: list[VulnerabilityNode] = Field(default_factory=list)
+    impacted_services: list[ImpactedService] = Field(default_factory=list)
+    risk_scores: list[RiskScore] = Field(default_factory=list)
+    owner_info: list[OwnerNode] = Field(default_factory=list)
+    ticket: Optional[RemediationTicket] = None
+    tool_call_history: list[ToolCallRecord] = Field(default_factory=list)
+    recommended_next_steps: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    error: Optional[str] = None
+    llm_summary: Optional[str] = None
+
+
+# ── API Request / Response Models ─────────────────────────────────────────────
+
+class AgentQueryRequest(BaseModel):
+    question: str = Field(..., min_length=5, max_length=2000)
+    create_ticket: bool = False
+
+
+class TicketCreateRequest(BaseModel):
+    service_id: str = Field(..., min_length=1)
+    vulnerability_id: str = Field(..., min_length=1)
+    reason: str = Field(..., min_length=5)
+    recommended_steps: list[str] = Field(default_factory=list)
+
+
+class GraphVisualizationNode(BaseModel):
+    id: str
+    label: str
+    node_type: str         # "SERVICE" | "VULNERABILITY" | "OWNER" | "REMEDIATION_TICKET"
+    properties: dict[str, Any]
+
+
+class GraphVisualizationEdge(BaseModel):
+    source: str
+    target: str
+    relationship: str
+
+
+class GraphVisualizationData(BaseModel):
+    nodes: list[GraphVisualizationNode]
+    edges: list[GraphVisualizationEdge]
+    node_count: int
+    edge_count: int
+
+
+class HealthResponse(BaseModel):
+    status: str
+    falkordb_connected: bool
+    falkordb_host: str
+    falkordb_port: int
+    graph_name: str
+    llm_enabled: bool
+    demo_mode: bool
+    version: str = "0.1.0"
