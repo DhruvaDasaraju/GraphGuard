@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import {
-  ExternalLink,
-  AlertCircle,
-  Shield,
-} from 'lucide-react';
+import { AlertOctagon, Terminal } from 'lucide-react';
 
-import { HeroSection } from './components/HeroSection';
+import { ShowroomHeader } from './components/ShowroomHeader';
+import { HeroShowroom } from './components/HeroShowroom';
+import { TelemetryTraceFeed } from './components/TelemetryTraceFeed';
+import { EvidenceGrid } from './components/EvidenceGrid';
+import { ActionApprovalPanel } from './components/ActionApprovalPanel';
+import { HalftoneFooter } from './components/HalftoneFooter';
+
 import { OverviewDashboard } from './components/OverviewDashboard';
 import { InvestigationWorkspace } from './components/InvestigationWorkspace';
 import { DependencyGraph } from './components/DependencyGraph';
@@ -41,10 +43,11 @@ export function App() {
   const [vulnerabilities, setVulnerabilities] = useState<VulnerabilityNode[]>([]);
   const [tickets, setTickets] = useState<RemediationTicket[]>([]);
   const [graphData, setGraphData] = useState<GraphVisualizationData | null>(null);
-  const [affectedCount, setAffectedCount] = useState<number>(0);
+  const [affectedCount, setAffectedCount] = useState<number>(6);
 
-  // Active Investigation State
-  const [selectedServiceId, setSelectedServiceId] = useState<string>('payment-service');
+  // Active Investigation & Scenario State
+  const [selectedScenario, setSelectedScenario] = useState<string>('payment');
+  const [selectedServiceId, setSelectedServiceId] = useState<string>('svc-1');
   const [prefilledVulnId, setPrefilledVulnId] = useState<string>('vuln-1');
   const [investigation, setInvestigation] = useState<InvestigationResult | null>(null);
 
@@ -81,7 +84,7 @@ export function App() {
           }
         });
       }
-      setAffectedCount(uniqueServices.size || 4);
+      setAffectedCount(uniqueServices.size || 6);
     } catch (err: any) {
       setError(err.message || 'Error communicating with GraphGuard backend');
     } finally {
@@ -134,217 +137,246 @@ export function App() {
     setTickets(refreshed);
   };
 
+  const handleSelectScenario = (scenarioId: string) => {
+    setSelectedScenario(scenarioId);
+    if (scenarioId === 'payment') {
+      setSelectedServiceId('svc-1');
+      setPrefilledVulnId('vuln-1');
+    } else if (scenarioId === 'auth') {
+      setSelectedServiceId('svc-5');
+      setPrefilledVulnId('vuln-2');
+    } else if (scenarioId === 'checkout') {
+      setSelectedServiceId('svc-2');
+      setPrefilledVulnId('vuln-1');
+    }
+  };
+
+  const handleTriggerScenarioInvestigation = (serviceId: string, vulnId?: string) => {
+    setSelectedServiceId(serviceId);
+    if (vulnId) setPrefilledVulnId(vulnId);
+    handleRunInvestigation(
+      `Investigate critical blast-radius and transitive dependency impact for ${serviceId}`,
+      false
+    );
+    setActiveTab('investigate');
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased">
-      {/* ── Top Modern Navigation Bar ── */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Logo & Brand */}
-          <div
-            onClick={() => setActiveTab('overview')}
-            className="flex items-center gap-2.5 cursor-pointer select-none group"
-          >
-            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs group-hover:bg-blue-700 transition-colors">
-              <Shield className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="text-lg font-extrabold tracking-tight text-slate-900 leading-none">
-                GraphGuard
-              </div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mt-0.5">
-                Connected Security Intelligence
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-showroom text-showroom-heading flex flex-col font-mono selection:bg-[#FFE600] selection:text-[#050505] transition-colors">
 
-          {/* Desktop Navigation Tabs (Clean Rounded Pills) */}
-          <nav className="hidden md:flex items-center gap-1.5 bg-slate-100/80 p-1 rounded-xl border border-slate-200/60 text-xs font-semibold">
-            {[
-              { id: 'overview', label: 'Overview' },
-              { id: 'investigate', label: 'Investigate' },
-              { id: 'atlas', label: 'Graph Atlas' },
-              { id: 'findings', label: 'Findings' },
-              { id: 'tickets', label: 'Remediation' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
-                  activeTab === tab.id
-                    ? 'bg-white text-blue-600 font-bold shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
+      {/* ── 1. Sticky Header Navigation ── */}
+      <ShowroomHeader
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onQuickInvestigate={() =>
+          handleTriggerScenarioInvestigation(selectedServiceId, prefilledVulnId)
+        }
+        isBackendHealthy={Boolean(health?.falkordb_connected)}
+      />
 
-          {/* Backend Connection Status & Docs Link */}
-          <div className="flex items-center gap-2.5 text-xs">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200/80 text-slate-700">
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  health?.falkordb_connected ? 'bg-emerald-500 animate-pulse' : 'bg-blue-600'
-                }`}
-              />
-              <span className="font-semibold text-[11px]">
-                {health?.falkordb_connected ? 'FalkorDB Live' : 'Demo Mode Active'}
-              </span>
-            </div>
-
-            <a
-              href="http://127.0.0.1:8000/docs"
-              target="_blank"
-              rel="noreferrer"
-              className="btn-modern-secondary hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold text-slate-700"
-            >
-              <span>API Docs</span>
-              <ExternalLink className="w-3 h-3 text-blue-600" />
-            </a>
-          </div>
-        </div>
-      </header>
-
-      {/* ── Main Hero Section (Visible in Overview) ── */}
-      {activeTab === 'overview' && (
-        <HeroSection
-          onStartInvestigation={() => setActiveTab('investigate')}
-          onExploreAtlas={() => setActiveTab('atlas')}
-          serviceCount={services.length}
-          vulnCount={vulnerabilities.length}
-        />
-      )}
-
-      {/* ── System Notice / Error Banner if any ── */}
+      {/* ── System Notice / Alert Banner if any ── */}
       {error && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 w-full">
-          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start justify-between gap-3 text-left text-xs">
-            <div className="flex items-start gap-2 text-rose-700">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <div>
-                <span className="font-bold">System Notice: </span>
-                <span>{error}</span>
-              </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full mt-4">
+          <div className="p-3.5 bg-[#FF0055] text-white border-[3px] border-[#050505] shadow-[4px_4px_0px_#050505] flex items-center justify-between gap-3 text-xs font-mono">
+            <div className="flex items-center gap-2">
+              <AlertOctagon className="w-4 h-4 shrink-0" />
+              <span>
+                <strong className="uppercase">Notice: </strong>
+                {error}
+              </span>
             </div>
             <button
               onClick={() => setError(null)}
-              className="font-bold text-rose-700 hover:underline cursor-pointer"
+              className="px-2 py-0.5 bg-black text-white hover:bg-white hover:text-black transition-colors font-bold uppercase text-[11px] cursor-pointer"
             >
-              Dismiss
+              DISMISS
             </button>
           </div>
         </div>
       )}
 
-      {/* ── Main Application Workspace ── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
-        {/* Mobile Navigation Strip */}
-        <div className="flex md:hidden overflow-x-auto gap-1.5 pb-4 mb-6 text-xs font-semibold">
-          {[
-            { id: 'overview', label: 'Overview' },
-            { id: 'investigate', label: 'Investigate' },
-            { id: 'atlas', label: 'Graph' },
-            { id: 'findings', label: 'Findings' },
-            { id: 'tickets', label: 'Tickets' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`px-3 py-1.5 rounded-lg border whitespace-nowrap cursor-pointer ${
-                activeTab === tab.id
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-slate-700 border-slate-200'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab 1: Overview Dashboard */}
+      {/* ── Main Showroom Content Workspace ── */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full space-y-12">
+        {/* Tab 1: Neo-Brutalist Technical Street Showroom (Overview) */}
         {activeTab === 'overview' && (
-          <OverviewDashboard
-            health={health}
-            services={services}
-            vulnerabilities={vulnerabilities}
-            tickets={tickets}
-            affectedServiceCount={affectedCount}
-            onSelectService={handleSelectServiceForInvestigation}
-            onRefresh={loadSystemData}
-            loading={loading}
-          />
+          <div className="space-y-12">
+            {/* Hero Section with Asymmetric Headline, 3D Canvas & Scenario Switcher */}
+            <HeroShowroom
+              onTriggerInvestigation={handleTriggerScenarioInvestigation}
+              onExploreGraph={() => setActiveTab('atlas')}
+              serviceCount={services.length}
+              vulnerabilityCount={vulnerabilities.length}
+              affectedCount={affectedCount}
+              selectedScenario={selectedScenario}
+              onSelectScenario={handleSelectScenario}
+            />
+
+            {/* Split Row: Step-by-Step Telemetry Trace + Human-in-the-Loop Approval */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              <div className="lg:col-span-7">
+                <TelemetryTraceFeed
+                  toolCalls={investigation?.tool_call_history || []}
+                  isInvestigating={investigating}
+                />
+              </div>
+
+              <div className="lg:col-span-5">
+                <ActionApprovalPanel
+                  investigation={investigation}
+                  existingTicket={investigation?.ticket}
+                  onCommitTicket={async (details) => {
+                    await handleCreateTicket({
+                      service_id: details.serviceId,
+                      vulnerability_id: details.vulnerabilityId,
+                      reason: details.reason,
+                      recommended_steps: details.recommendedSteps,
+                    });
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Evidence & Cascading Dependency Topology Grid */}
+            <EvidenceGrid
+              impactedServices={investigation?.impacted_services || []}
+              onSelectService={handleSelectServiceForInvestigation}
+            />
+
+            {/* Full Telemetry Overview Stats & Metrics */}
+            <div className="border-[3.5px] border-[#050505] bg-white dark:bg-[#0c1022] shadow-[8px_8px_0px_#050505] p-6">
+              <div className="border-b-[2.5px] border-[#050505] pb-3 mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Terminal className="w-5 h-5 text-[#FFE600]" />
+                  <span className="font-display font-black text-lg text-[#050505] dark:text-white uppercase tracking-tight">
+                    FALKORDB KNOWLEDGE BASE // RAW TOPOLOGY INVENTORY
+                  </span>
+                </div>
+                <button
+                  onClick={loadSystemData}
+                  className="px-3 py-1 bg-[#f0f4fc] dark:bg-[#141935] border-[2px] border-[#050505] shadow-[2px_2px_0px_#050505] hover:bg-[#FFE600] hover:text-[#050505] text-xs font-mono font-bold uppercase transition-colors"
+                >
+                  REFRESH METRICS
+                </button>
+              </div>
+
+              <OverviewDashboard
+                health={health}
+                services={services}
+                vulnerabilities={vulnerabilities}
+                tickets={tickets}
+                affectedServiceCount={affectedCount}
+                onSelectService={handleSelectServiceForInvestigation}
+                onRefresh={loadSystemData}
+                loading={loading}
+              />
+            </div>
+          </div>
         )}
 
-        {/* Tab 2: Investigation Lab */}
-        {activeTab === 'investigate' && (
-          <InvestigationWorkspace
-            services={services}
-            selectedServiceId={selectedServiceId}
-            onSelectService={setSelectedServiceId}
-            onRunInvestigation={handleRunInvestigation}
-            investigation={investigation}
-            loading={investigating}
-            onCreateTicketForVuln={handlePrepareTicket}
-          />
-        )}
-
-        {/* Tab 3: Interactive Dependency Atlas */}
+        {/* Tab 2: Architecture Graph Atlas */}
         {activeTab === 'atlas' && (
-          <DependencyGraph
-            graphData={graphData}
-            investigation={investigation}
-            onSelectService={handleSelectServiceForInvestigation}
-          />
+          <div className="space-y-6">
+            <div className="flex items-center justify-between border-b-[3.5px] border-[#050505] pb-3">
+              <div>
+                <span className="px-2.5 py-0.5 bg-[#00F0FF] text-[#050505] border-[2px] border-[#050505] shadow-[2px_2px_0px_#050505] font-mono text-xs font-black uppercase -rotate-1 inline-block">
+                  02 · ARCHITECTURE // MAP
+                </span>
+                <h2 className="font-display font-black text-3xl text-[#050505] dark:text-white uppercase tracking-tight mt-1">
+                  INTERACTIVE FALKORDB TOPOLOGY ATLAS
+                </h2>
+              </div>
+            </div>
+
+            <div className="border-[3.5px] border-[#050505] shadow-[8px_8px_0px_#050505] bg-white dark:bg-[#0c1022]">
+              <DependencyGraph
+                graphData={graphData}
+                investigation={investigation}
+                onSelectService={handleSelectServiceForInvestigation}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Tab 3: Autonomous Investigation Lab */}
+        {activeTab === 'investigate' && (
+          <div className="space-y-8">
+            <div className="flex items-center justify-between border-b-[3.5px] border-[#050505] pb-3">
+              <div>
+                <span className="px-2.5 py-0.5 bg-[#FF0055] text-white border-[2px] border-[#050505] shadow-[2px_2px_0px_#050505] font-mono text-xs font-black uppercase -rotate-1 inline-block">
+                  03 · INVESTIGATION // AGENT
+                </span>
+                <h2 className="font-display font-black text-3xl text-[#050505] dark:text-white uppercase tracking-tight mt-1">
+                  AUTONOMOUS MCP TRIAGE LAB
+                </h2>
+              </div>
+            </div>
+
+            <InvestigationWorkspace
+              services={services}
+              selectedServiceId={selectedServiceId}
+              onSelectService={setSelectedServiceId}
+              onRunInvestigation={handleRunInvestigation}
+              investigation={investigation}
+              loading={investigating}
+              onCreateTicketForVuln={handlePrepareTicket}
+            />
+
+            <TelemetryTraceFeed
+              toolCalls={investigation?.tool_call_history || []}
+              isInvestigating={investigating}
+            />
+          </div>
         )}
 
         {/* Tab 4: Findings & Scoring Dossier */}
         {activeTab === 'findings' && (
-          <FindingsStory
-            riskScores={investigation?.risk_scores || []}
-            vulnerabilities={vulnerabilities}
-            owners={investigation?.owner_info || []}
-            targetServiceId={investigation?.target_entity || selectedServiceId}
-            onCreateTicket={handlePrepareTicket}
-          />
+          <div className="space-y-8">
+            <FindingsStory
+              riskScores={investigation?.risk_scores || []}
+              vulnerabilities={vulnerabilities}
+              owners={investigation?.owner_info || []}
+              targetServiceId={investigation?.target_entity || selectedServiceId}
+              onCreateTicket={handlePrepareTicket}
+            />
+
+            <EvidenceGrid
+              impactedServices={investigation?.impacted_services || []}
+              onSelectService={handleSelectServiceForInvestigation}
+            />
+          </div>
         )}
 
         {/* Tab 5: Remediation Tickets Board */}
         {activeTab === 'tickets' && (
-          <RemediationBoard
-            tickets={tickets}
-            services={services}
-            vulnerabilities={vulnerabilities}
-            initialServiceId={selectedServiceId}
-            initialVulnId={prefilledVulnId}
-            onCreateTicket={handleCreateTicket}
-            loading={loading}
-          />
+          <div className="space-y-8">
+            <ActionApprovalPanel
+              investigation={investigation}
+              existingTicket={investigation?.ticket}
+              onCommitTicket={async (details) => {
+                await handleCreateTicket({
+                  service_id: details.serviceId,
+                  vulnerability_id: details.vulnerabilityId,
+                  reason: details.reason,
+                  recommended_steps: details.recommendedSteps,
+                });
+              }}
+            />
+
+            <RemediationBoard
+              tickets={tickets}
+              services={services}
+              vulnerabilities={vulnerabilities}
+              initialServiceId={selectedServiceId}
+              initialVulnId={prefilledVulnId}
+              onCreateTicket={handleCreateTicket}
+              loading={loading}
+            />
+          </div>
         )}
       </main>
 
-      {/* ── Modern Footer ── */}
-      <footer className="border-t border-slate-200 bg-white py-6 mt-16 text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-800">GraphGuard</span>
-            <span>·</span>
-            <span>Connected AI Security Intelligence</span>
-            <span>·</span>
-            <span className="text-slate-400">Track 1 Hackathon Project</span>
-          </div>
-
-          <div className="flex items-center gap-3 text-[11px] font-medium text-slate-400">
-            <span>FalkorDB Graph</span>
-            <span>•</span>
-            <span>FastAPI Backend</span>
-            <span>•</span>
-            <span>MCP Protocol</span>
-            <span>•</span>
-            <span>React Flow</span>
-          </div>
-        </div>
-      </footer>
+      {/* ── 6. Interactive Halftone Canvas Footer ── */}
+      <HalftoneFooter />
     </div>
   );
 }

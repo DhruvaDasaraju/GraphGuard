@@ -83,7 +83,19 @@ def execute_query(
         result = graph.query(query, params or {})
         rows: list[dict[str, Any]] = []
         if result and result.result_set:
-            headers = result.header if result.header else []
+            headers: list[str] = []
+            for h in (result.header or []):
+                if isinstance(h, (list, tuple)) and len(h) > 1:
+                    val = h[1]
+                else:
+                    val = h
+                if isinstance(val, bytes):
+                    headers.append(val.decode("utf-8", errors="replace"))
+                elif isinstance(val, (list, tuple)):
+                    headers.append(str(val[0]) if val else "col")
+                else:
+                    headers.append(str(val))
+
             for row in result.result_set:
                 if headers:
                     rows.append(dict(zip(headers, row)))

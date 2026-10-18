@@ -44,7 +44,7 @@ from app.graph_queries import (
     get_tickets,
     get_ticket_by_id,
 )
-from app.risk_engine import calculate_risk_score, rank_findings
+from app.risk_engine import calculate_risk_score, rank_findings as score_rank_findings
 from app.ticket_service import create_remediation_ticket, TicketCreationError
 from app.config import settings
 
@@ -178,7 +178,7 @@ def rank_findings(
         calculate_risk_score(v, impacted_count, depth)
         for v in vulns
     ]
-    ranked = rank_findings(scores)
+    ranked = score_rank_findings(scores)
 
     return {
         "service": svc.model_dump(),

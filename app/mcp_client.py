@@ -109,6 +109,21 @@ class GraphGuardMCPClient:
             for t in self._available_tools
         ]
 
+    def get_openai_tool_schemas(self) -> list[dict[str, Any]]:
+        """
+        Return tool definitions adapted for OpenAI Responses API / Function Calling format.
+        """
+        return [
+            {
+                "type": "function",
+                "name": t.name,
+                "description": t.description or "",
+                "parameters": t.input_schema or {"type": "object", "properties": {}},
+                "strict": False,
+            }
+            for t in self._available_tools
+        ]
+
     async def call_tool(
         self,
         tool_name: str,

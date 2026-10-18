@@ -4,12 +4,25 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233949FF'><path d='M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5zm0 18c-3.75-1.05-6.66-4.9-6.96-9.5H12V4.19l7 3.89v5.42h-7V20z'/></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GraphGuard — Cyber Security Intelligence Lab</title>
-            <link rel="preconnect" href="https://fonts.googleapis.com">
+    <title>GRAPHGUARD // INTEL — Neo-Brutalist Security Showroom</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Space+Grotesk:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+      (function() {
+        try {
+          const stored = localStorage.getItem('theme');
+          if (stored === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+
+        } catch (_) {}
+      })();
+    </script>
   </head>
-  <body class="bg-[#F8FAFC] text-[#0F172A] antialiased selection:bg-[#D7FF43] selection:text-[#17172B]">
+  <body class="bg-[#f1f4fb] dark:bg-[#070913] text-[#050505] dark:text-[#f4f6ff] antialiased selection:bg-[#FFE600] selection:text-[#050505]">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

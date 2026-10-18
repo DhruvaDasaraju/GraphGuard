@@ -1,109 +1,209 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
-    --bg-page: #F8FAFC;
-    --bg-card: #FFFFFF;
-    --text-primary: #0F172A;
-    --text-secondary: #475569;
-    --text-muted: #94A3B8;
+    --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
 
-    --border-light: #E2E8F0;
-    --border-subtle: #F1F5F9;
+    /* Theme Tokens - Light Showroom */
+    --c-ink: #050505;
+    --c-canvas-bg: #f1f4fb;
+    --c-card-bg: #ffffff;
+    --c-card-muted: #e9eef8;
+    --c-border: #050505;
 
-    --primary-blue: #2563EB;
-    --primary-blue-light: #EFF6FF;
+    /* Neon Accents */
+    --c-cyan: #00F0FF;
+    --c-yellow: #FFE600;
+    --c-green: #00FF66;
+    --c-magenta: #FF0055;
+    --c-purple: #D946EF;
 
-    --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+    /* Halftone Canvas Palette (Light Mode: deep ink dots) */
+    --fbg: #f1f4fb;
+    --fink: #050505;
+    --fwarm: #FFE600;
+  }
+
+  .dark {
+    /* Theme Tokens - Dark Showroom */
+    --c-ink: #f4f6ff;
+    --c-canvas-bg: #070913;
+    --c-card-bg: #0c1022;
+    --c-card-muted: #11152a;
+    --c-border: #050505;
+
+    /* Halftone Canvas Palette (Dark Mode: bright electric particles) */
+    --fbg: #070913;
+    --fink: #ffffff;
+    --fwarm: #00F0FF;
   }
 
   body {
-    background-color: var(--bg-page);
-    color: var(--text-primary);
-    font-family: var(--font-sans);
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    background-color: var(--c-canvas-bg);
+    color: var(--c-ink);
+    font-family: var(--font-mono);
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-sans);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-  }
-
-  code, pre, .font-mono {
-    font-family: var(--font-mono);
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
   }
 }
 
-/* Modern soft card utility with rounded corners */
-.card-modern {
-  background-color: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 1rem;
-  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.02);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+/* ── Showroom Atmospheric Patterns ─────────────────────────────────────────── */
+.bg-showroom {
+  background-color: #f1f4fb;
+  background-image: 
+    radial-gradient(circle at 10% 10%, rgba(0, 240, 255, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 90% 15%, rgba(255, 230, 0, 0.10) 0%, transparent 40%),
+    radial-gradient(circle at 50% 85%, rgba(255, 0, 85, 0.08) 0%, transparent 45%),
+    repeating-linear-gradient(45deg, rgba(5, 5, 5, 0.03) 0px, rgba(5, 5, 5, 0.03) 2px, transparent 2px, transparent 16px);
 }
 
-.card-modern-hover:hover {
-  border-color: #CBD5E1;
-  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
-  transform: translateY(-1px);
+.dark .bg-showroom {
+  background-color: #070913;
+  background-image:
+    radial-gradient(circle at 15% 15%, rgba(0, 240, 255, 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 85% 20%, rgba(255, 0, 85, 0.10) 0%, transparent 45%),
+    radial-gradient(circle at 50% 80%, rgba(0, 255, 102, 0.08) 0%, transparent 45%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 36px 36px, 36px 36px;
 }
 
-/* Smooth rounded buttons */
-.btn-modern-primary {
-  background-color: #2563EB;
-  color: #FFFFFF;
-  border-radius: 0.75rem;
-  font-weight: 600;
-  box-shadow: 0 1px 2px 0 rgba(37, 99, 235, 0.2);
-  transition: all 0.15s ease-in-out;
+.text-showroom-heading {
+  color: #050505;
 }
 
-.btn-modern-primary:hover {
-  background-color: #1D4ED8;
-  box-shadow: 0 4px 8px 0 rgba(37, 99, 235, 0.25);
-  transform: translateY(-1px);
+.dark .text-showroom-heading {
+  color: #f4f6ff;
 }
 
-.btn-modern-primary:active {
-  transform: translateY(0);
+.text-showroom-body {
+  color: #050505;
+  opacity: 0.85;
 }
 
-.btn-modern-secondary {
-  background-color: #FFFFFF;
-  color: #1E293B;
-  border: 1px solid #E2E8F0;
-  border-radius: 0.75rem;
-  font-weight: 600;
-  transition: all 0.15s ease-in-out;
+.dark .text-showroom-body {
+  color: #f4f6ff;
+  opacity: 0.85;
 }
 
-.btn-modern-secondary:hover {
-  background-color: #F8FAFC;
-  border-color: #CBD5E1;
-  color: #0F172A;
+
+/* ── Neo-Brutalist Cut / Chamfered Geometry ─────────────────────────────────── */
+.clip-chamfer-14 {
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
 }
 
-/* Custom subtle scrollbar */
+.clip-chamfer-8 {
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+
+.clip-badge-slant {
+  clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+}
+
+.clip-tab-slant {
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 100%, 0 100%);
+}
+
+/* ── Neo-Brutalist Solid Block Drop Shadows ─────────────────────────────────── */
+.neo-border {
+  border: 3.5px solid #050505;
+}
+
+.neo-border-sm {
+  border: 2px solid #050505;
+}
+
+.neo-shadow-xs {
+  box-shadow: 2px 2px 0px #050505;
+}
+
+.neo-shadow-sm {
+  box-shadow: 3px 3px 0px #050505;
+}
+
+.neo-shadow {
+  box-shadow: 5px 5px 0px #050505;
+}
+
+.neo-shadow-lg {
+  box-shadow: 8px 8px 0px #050505;
+}
+
+.neo-shadow-xl {
+  box-shadow: 10px 10px 0px #050505;
+}
+
+.neo-btn {
+  border: 3px solid #050505;
+  box-shadow: 5px 5px 0px #050505;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.neo-btn:hover {
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 6.5px 6.5px 0px #050505;
+}
+
+.neo-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #050505;
+}
+
+/* Glitch Chromatic Text Shadows */
+.text-chromatic-cyan {
+  text-shadow: 3px 3px 0px #00F0FF, -2px -2px 0px #FF0055;
+}
+
+.text-chromatic-yellow {
+  text-shadow: 3px 3px 0px #FFE600, -2px -2px 0px #00F0FF;
+}
+
+.text-chromatic-dark {
+  text-shadow: 4px 4px 0px #050505;
+}
+
+/* Micro-rotations */
+.tilt-left {
+  transform: rotate(-1deg);
+}
+
+.tilt-right {
+  transform: rotate(0.8deg);
+}
+
+/* Custom Neo Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 9px;
+  height: 9px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F1F5F9;
+  background: #f0f4fc;
+  border-left: 2px solid #050505;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #080a18;
+  border-left: 2px solid #050505;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 9999px;
+  background: #FFE600;
+  border: 2px solid #050505;
+  box-shadow: 1px 1px 0px #050505;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: #00F0FF;
 }
